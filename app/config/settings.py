@@ -1,2 +1,2 @@
-APP_NAME = "POS Python"
-VERSION = "1.0.0"
+APP_NAME = "Punto de Venta"
+version = "1.0.0"
