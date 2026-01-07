@@ -2,7 +2,7 @@ import subprocess
 import requests
 from app.config.settings import version
 
-URL_VERSION = "https://github.com/DAVIDCRUZ18/Pos.git/raw/main/version.txt"
+URL_VERSION = "https://raw.githubusercontent.com/DAVIDCRUZ18/Pos/main/version.txt"
 
 
 def get_remote_version():
