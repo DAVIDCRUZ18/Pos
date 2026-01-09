@@ -94,12 +94,72 @@ def abrir_sistema_principal(datos_usuario):
     main_container = tk.Frame(ventana_principal, bg="#f0f4f8")
     main_container.pack(fill="both", expand=True)
     
+    # ================= VARIABLES BASE ==================
+    vista_actual = tk.StringVar(value="inicio")
+
     # ================= SIDEBAR IZQUIERDO ==================
-    sidebar = tk.Frame(main_container, bg="#ffffff", width=280, bd=0)
-    sidebar.pack(side="left", fill="y", padx=(15, 5), pady=15)
-    sidebar.pack_propagate(False)
-    
-    # Título del sidebar
+    sidebar_container = tk.Frame(main_container, bg="#ffffff", width=280)
+    sidebar_container.pack(side="left", fill="y", padx=(15, 5), pady=15)
+    sidebar_container.pack_propagate(False)
+
+    # Canvas scrollable
+    sidebar_canvas = tk.Canvas(
+        sidebar_container,
+        bg="#ffffff",
+        highlightthickness=0
+    )
+    sidebar_canvas.pack(side="left", fill="both", expand=True)
+
+    # Scrollbar
+    sidebar_scrollbar = tk.Scrollbar(
+        sidebar_container,
+        orient="vertical",
+        command=sidebar_canvas.yview
+    )
+    sidebar_scrollbar.pack(side="right", fill="y")
+
+    sidebar_canvas.configure(yscrollcommand=sidebar_scrollbar.set)
+
+    # Frame interior del menú
+    sidebar = tk.Frame(sidebar_canvas, bg="#ffffff")
+
+    canvas_window = sidebar_canvas.create_window(
+        (0, 0),
+        window=sidebar,
+        anchor="nw"
+    )
+
+
+    # ========= Ajustar scroll al tamaño del contenido =========
+    def actualizar_scroll(event=None):
+        sidebar_canvas.configure(scrollregion=sidebar_canvas.bbox("all"))
+
+    sidebar.bind("<Configure>", actualizar_scroll)
+
+
+    # ========= Forzar mismo ancho del canvas =========
+    def fijar_ancho_canvas(event):
+        sidebar_canvas.itemconfig(
+            canvas_window,
+            width=sidebar_container.winfo_width()
+        )
+
+    sidebar_canvas.bind("<Configure>", fijar_ancho_canvas)
+
+
+    # ========= ACTIVAR SCROLL CON LA RUEDA DEL MOUSE =========
+    def scroll_con_rueda(event):
+        sidebar_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
+
+    # Windows / Linux
+    sidebar_canvas.bind_all("<MouseWheel>", scroll_con_rueda)
+
+    # MacOS
+    sidebar_canvas.bind_all("<Button-4>", lambda e: sidebar_canvas.yview_scroll(-1, "units"))
+    sidebar_canvas.bind_all("<Button-5>", lambda e: sidebar_canvas.yview_scroll(1, "units"))
+
+
+    # ================= TÍTULO ==================
     tk.Label(
         sidebar,
         text="MENÚ PRINCIPAL",
@@ -108,14 +168,16 @@ def abrir_sistema_principal(datos_usuario):
         fg="#1f2937",
         pady=15
     ).pack(fill="x")
-    
+
     tk.Frame(sidebar, bg="#e5e7eb", height=1).pack(fill="x", padx=10)
-    
-    # Frame para botones de menú
+
+
+    # ================= FRAME DE BOTONES ==================
     menu_buttons_frame = tk.Frame(sidebar, bg="#ffffff")
     menu_buttons_frame.pack(fill="both", expand=True, pady=10)
-    
-    # Definición de módulos
+
+
+    # ================= MÓDULOS ==================
     modulos = [
         {"nombre": "Inicio", "icono": "🏠", "vista": "inicio", "color": "#3b82f6"},
         {"nombre": "Ventas", "icono": "💵", "vista": "ventas", "color": "#10b981"},
@@ -128,26 +190,29 @@ def abrir_sistema_principal(datos_usuario):
         {"nombre": "Usuarios", "icono": "🧑‍💻", "vista": "usuarios", "color": "#6366f1"},
         {"nombre": "Configuración", "icono": "⚙️", "vista": "config", "color": "#64748b"},
     ]
-    
-    # Frame de contenido (donde se muestran las vistas)
+
+
+    # ================= CONTENIDO PRINCIPAL ==================
     content_frame = tk.Frame(main_container, bg="#ffffff", bd=0)
     content_frame.pack(side="left", fill="both", expand=True, padx=(5, 15), pady=15)
-    
-    # Función para crear vistas según el módulo
+
+
+    # ================= FUNCIÓN CAMBIO DE VISTA ==================
     def mostrar_vista(vista_nombre):
-        # Limpiar frame de contenido
+
+        # Limpiar contenido
         for widget in content_frame.winfo_children():
             widget.destroy()
-        
+
         vista_actual.set(vista_nombre)
-        
-        # Header de la vista
+
+        # Header
         vista_header = tk.Frame(content_frame, bg="#f8fafc", height=80)
         vista_header.pack(fill="x", padx=20, pady=(20, 10))
         vista_header.pack_propagate(False)
-        
-        # Título de la vista
+
         modulo_info = next((m for m in modulos if m["vista"] == vista_nombre), None)
+
         if modulo_info:
             tk.Label(
                 vista_header,
@@ -156,11 +221,11 @@ def abrir_sistema_principal(datos_usuario):
                 bg="#f8fafc",
                 fg="#1f2937"
             ).pack(side="left", pady=20, padx=10)
-        
-        # Contenido específico según la vista
+
         vista_content = tk.Frame(content_frame, bg="#ffffff")
         vista_content.pack(fill="both", expand=True, padx=20, pady=10)
-        
+
+        # Llamado de vistas
         if vista_nombre == "inicio":
             crear_vista_inicio(vista_content, datos_usuario)
         elif vista_nombre == "ventas":
@@ -181,13 +246,18 @@ def abrir_sistema_principal(datos_usuario):
             crear_vista_usuarios(vista_content)
         elif vista_nombre == "config":
             crear_vista_configuracion(vista_content)
-    
-    # Crear botones del menú
+
+        actualizar_botones_activos()
+
+
+    # ================= CREACIÓN DE BOTONES ==================
     botones_menu = {}
+
     for modulo in modulos:
+
         btn_frame = tk.Frame(menu_buttons_frame, bg="#ffffff")
         btn_frame.pack(fill="x", padx=15, pady=5)
-        
+
         btn = tk.Button(
             btn_frame,
             text=f"{modulo['icono']}  {modulo['nombre']}",
@@ -203,28 +273,43 @@ def abrir_sistema_principal(datos_usuario):
             command=lambda v=modulo['vista']: mostrar_vista(v)
         )
         btn.pack(fill="x")
+
         botones_menu[modulo['vista']] = btn
-        
-        # Efectos hover
-        def on_enter(e, button=btn, color=modulo['color']):
-            if vista_actual.get() != modulo['vista']:
+
+        # Hover
+        def on_enter(e, button=btn, vista=modulo["vista"]):
+            if vista_actual.get() != vista:
                 button.config(bg="#e5e7eb")
-        
-        def on_leave(e, button=btn):
-            if vista_actual.get() != modulo['vista']:
+
+        def on_leave(e, button=btn, vista=modulo["vista"]):
+            if vista_actual.get() != vista:
                 button.config(bg="#f3f4f6")
-        
+
         btn.bind("<Enter>", on_enter)
         btn.bind("<Leave>", on_leave)
-    
-    # Función para actualizar estilo del botón activo
+
+
+    # ================= BOTÓN ACTIVO ==================
     def actualizar_botones_activos():
         for vista_key, boton in botones_menu.items():
             if vista_key == vista_actual.get():
                 modulo = next((m for m in modulos if m["vista"] == vista_key), None)
-                boton.config(bg=modulo['color'], fg="white", font=("Segoe UI", 11, "bold"))
+                boton.config(
+                    bg=modulo["color"],
+                    fg="white",
+                    font=("Segoe UI", 11, "bold")
+                )
             else:
-                boton.config(bg="#f3f4f6", fg="#374151", font=("Segoe UI", 11))
+                boton.config(
+                    bg="#f3f4f6",
+                    fg="#374151",
+                    font=("Segoe UI", 11)
+                )
+
+
+    # ================= CARGAR VISTA INICIAL ==================
+    mostrar_vista("inicio")
+
     
     # Modificar mostrar_vista para actualizar botones
     original_mostrar_vista = mostrar_vista
