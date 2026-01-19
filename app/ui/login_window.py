@@ -23,31 +23,31 @@ def login_window():
     style.theme_use('clam')
     
     style.configure("Custom.TEntry",
-                   fieldbackground="white",
-                   borderwidth=2,
-                   relief="flat")
+                fieldbackground="white",
+                borderwidth=2,
+                relief="flat")
     
     style.configure("Primary.TButton",
-                   background="#4a90e2",
-                   foreground="white",
-                   borderwidth=0,
-                   focuscolor="none",
-                   padding=(20, 10),
-                   font=("Arial", 11, "bold"))
+                background="#4a90e2",
+                foreground="white",
+                borderwidth=0,
+                focuscolor="none",
+                padding=(20, 10),
+                font=("Arial", 11, "bold"))
     
     style.map("Primary.TButton",
-             background=[("active", "#357abd"), ("pressed", "#2868a8")])
+            background=[("active", "#357abd"), ("pressed", "#2868a8")])
     
     style.configure("Secondary.TButton",
-                   background="#6c757d",
-                   foreground="white",
-                   borderwidth=0,
-                   focuscolor="none",
-                   padding=(20, 10),
-                   font=("Arial", 11))
+                background="#6c757d",
+                foreground="white",
+                borderwidth=0,
+                focuscolor="none",
+                padding=(20, 10),
+                font=("Arial", 11))
     
     style.map("Secondary.TButton",
-             background=[("active", "#5a6268"), ("pressed", "#495057")])
+            background=[("active", "#5a6268"), ("pressed", "#495057")])
     
     # ===== FUNCIONES DE LOGIN =====
     def realizar_login():
@@ -168,14 +168,14 @@ def login_window():
     
     remember_var = tk.BooleanVar()
     tk.Checkbutton(remember_frame, text="Recordar mi sesión", variable=remember_var, bg="white", fg="#555", 
-                   font=("Arial", 9), activebackground="white", selectcolor="white").pack(side="left")
+                    font=("Arial", 9), activebackground="white", selectcolor="white").pack(side="left")
     
     # Botones
     buttons_frame = tk.Frame(login_content, bg="white")
     buttons_frame.pack(pady=20, fill="x", padx=40)
     
     login_btn = ttk.Button(buttons_frame, text="INICIAR SESIÓN", style="Primary.TButton", 
-                          cursor="hand2", command=realizar_login)
+                        cursor="hand2", command=realizar_login)
     login_btn.pack(fill="x", ipady=5)
     
     register_btn = ttk.Button(

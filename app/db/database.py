@@ -30,11 +30,20 @@ def crear_tablas():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ventas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_id INTEGER,
-            total REAL,
-            fecha TEXT,
+            fecha TEXT NOT NULL,
+            total REAL NOT NULL,
+            cliente_id INTEGER,
+            usuario_id INTEGER NOT NULL,
+            metodo_pago TEXT DEFAULT 'efectivo',
+            estado TEXT DEFAULT 'completada',
+
+            fecha_anulacion TEXT,
+            motivo_anulacion TEXT,
+            usuario_anula INTEGER,
+
+            FOREIGN KEY (cliente_id) REFERENCES clientes(id),
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-        )
+        );
     """)
     
     # Tabla de productos
@@ -52,16 +61,17 @@ def crear_tablas():
     
     # Tabla de detalle de ventas
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS detalle_ventas (
+        CREATE TABLE IF NOT EXISTS detalle_venta (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            venta_id INTEGER,
-            producto_id INTEGER,
-            cantidad INTEGER,
-            precio_unitario REAL,
-            subtotal REAL,
+            venta_id INTEGER NOT NULL,
+            producto_id INTEGER NOT NULL,
+            cantidad INTEGER NOT NULL,
+            precio_unitario REAL NOT NULL,
+            subtotal REAL NOT NULL,
+
             FOREIGN KEY (venta_id) REFERENCES ventas(id),
             FOREIGN KEY (producto_id) REFERENCES productos(id)
-        )
+        );
     """)
     
     conn.commit()

@@ -3,6 +3,39 @@ from tkinter import ttk
 from datetime import datetime
 import app.db.database as db
 from app.config.settings import APP_NAME, version
+from app.ui.ventas_view import crear_vista_ventas
+
+# ================= IMPORTAR MÓDULOS DE VISTAS ==================
+try:
+    from app.ui.clientes import crear_vista_clientes
+except ImportError:
+    crear_vista_clientes = None
+
+try:
+    from app.ui.gastos import crear_vista_gastos
+except ImportError:
+    crear_vista_gastos = None
+
+try:
+    from app.ui.inventario import crear_vista_inventario
+except ImportError:
+    crear_vista_inventario = None
+
+try:
+    from app.ui.proveedores import crear_vista_proveedores
+except ImportError:
+    crear_vista_proveedores = None
+
+try:
+    from app.ui.reportes import crear_vista_reportes
+except ImportError:
+    crear_vista_reportes = None
+
+try:
+    from app.ui.usuarios import crear_vista_usuarios
+except ImportError:
+    crear_vista_usuarios = None
+
 
 def abrir_sistema_principal(datos_usuario):
     ventana_principal = tk.Toplevel()
@@ -94,9 +127,6 @@ def abrir_sistema_principal(datos_usuario):
     main_container = tk.Frame(ventana_principal, bg="#f0f4f8")
     main_container.pack(fill="both", expand=True)
     
-    # ================= VARIABLES BASE ==================
-    vista_actual = tk.StringVar(value="inicio")
-
     # ================= SIDEBAR IZQUIERDO ==================
     sidebar_container = tk.Frame(main_container, bg="#ffffff", width=280)
     sidebar_container.pack(side="left", fill="y", padx=(15, 5), pady=15)
@@ -129,13 +159,11 @@ def abrir_sistema_principal(datos_usuario):
         anchor="nw"
     )
 
-
     # ========= Ajustar scroll al tamaño del contenido =========
     def actualizar_scroll(event=None):
         sidebar_canvas.configure(scrollregion=sidebar_canvas.bbox("all"))
 
     sidebar.bind("<Configure>", actualizar_scroll)
-
 
     # ========= Forzar mismo ancho del canvas =========
     def fijar_ancho_canvas(event):
@@ -145,7 +173,6 @@ def abrir_sistema_principal(datos_usuario):
         )
 
     sidebar_canvas.bind("<Configure>", fijar_ancho_canvas)
-
 
     # ========= ACTIVAR SCROLL CON LA RUEDA DEL MOUSE =========
     def scroll_con_rueda(event):
@@ -157,7 +184,6 @@ def abrir_sistema_principal(datos_usuario):
     # MacOS
     sidebar_canvas.bind_all("<Button-4>", lambda e: sidebar_canvas.yview_scroll(-1, "units"))
     sidebar_canvas.bind_all("<Button-5>", lambda e: sidebar_canvas.yview_scroll(1, "units"))
-
 
     # ================= TÍTULO ==================
     tk.Label(
@@ -171,11 +197,9 @@ def abrir_sistema_principal(datos_usuario):
 
     tk.Frame(sidebar, bg="#e5e7eb", height=1).pack(fill="x", padx=10)
 
-
     # ================= FRAME DE BOTONES ==================
     menu_buttons_frame = tk.Frame(sidebar, bg="#ffffff")
     menu_buttons_frame.pack(fill="both", expand=True, pady=10)
-
 
     # ================= MÓDULOS ==================
     modulos = [
@@ -189,17 +213,15 @@ def abrir_sistema_principal(datos_usuario):
         {"nombre": "Gastos", "icono": "💰", "vista": "gastos", "color": "#ef4444"},
         {"nombre": "Usuarios", "icono": "🧑‍💻", "vista": "usuarios", "color": "#6366f1"},
         {"nombre": "Configuración", "icono": "⚙️", "vista": "config", "color": "#64748b"},
+        {"nombre": "Información", "icono": "❓", "vista": "Información", "color": "#1f2d42"},
     ]
-
 
     # ================= CONTENIDO PRINCIPAL ==================
     content_frame = tk.Frame(main_container, bg="#ffffff", bd=0)
     content_frame.pack(side="left", fill="both", expand=True, padx=(5, 15), pady=15)
 
-
     # ================= FUNCIÓN CAMBIO DE VISTA ==================
     def mostrar_vista(vista_nombre):
-
         # Limpiar contenido
         for widget in content_frame.winfo_children():
             widget.destroy()
@@ -225,36 +247,96 @@ def abrir_sistema_principal(datos_usuario):
         vista_content = tk.Frame(content_frame, bg="#ffffff")
         vista_content.pack(fill="both", expand=True, padx=20, pady=10)
 
-        # Llamado de vistas
-        if vista_nombre == "inicio":
-            crear_vista_inicio(vista_content, datos_usuario)
-        elif vista_nombre == "ventas":
-            crear_vista_ventas(vista_content)
-        elif vista_nombre == "inventario":
-            crear_vista_inventario(vista_content)
-        elif vista_nombre == "clientes":
-            crear_vista_clientes(vista_content)
-        elif vista_nombre == "proveedores":
-            crear_vista_proveedores(vista_content)
-        elif vista_nombre == "compras":
-            crear_vista_compras(vista_content)
-        elif vista_nombre == "reportes":
-            crear_vista_reportes(vista_content)
-        elif vista_nombre == "gastos":
-            crear_vista_gastos(vista_content)
-        elif vista_nombre == "usuarios":
-            crear_vista_usuarios(vista_content)
-        elif vista_nombre == "config":
-            crear_vista_configuracion(vista_content)
+        # ================= LLAMADO DE VISTAS ==================
+        try:
+            if vista_nombre == "inicio":
+                crear_vista_inicio_local(vista_content, datos_usuario)
+            
+            elif vista_nombre == "ventas":
+                if crear_vista_ventas:
+                    crear_vista_ventas(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Ventas", "💵", 
+                        "Módulo de registro y gestión de ventas.\nAquí puedes crear nuevas ventas, consultar historial y generar facturas.")
+            
+            elif vista_nombre == "inventario":
+                if crear_vista_inventario:
+                    crear_vista_inventario(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Inventario", "📦",
+                        "Control de stock y productos.\nRegistra entradas, salidas y mantén actualizado tu inventario.")
+            
+            elif vista_nombre == "clientes":
+                if crear_vista_clientes:
+                    crear_vista_clientes(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Clientes", "👥",
+                        "Gestión de base de datos de clientes.\nRegistra, consulta y administra información de tus clientes.")
+            
+            elif vista_nombre == "proveedores":
+                if crear_vista_proveedores:
+                    crear_vista_proveedores(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Proveedores", "📑",
+                        "Administración de proveedores.\nMantén el registro de tus proveedores y sus datos de contacto.")
+            
+            elif vista_nombre == "compras":
+                crear_vista_generica(vista_content, "Compras", "🧾",
+                    "Registro de compras a proveedores.\nLleva el control de tus adquisiciones y pagos.")
+            
+            elif vista_nombre == "reportes":
+                if crear_vista_reportes:
+                    crear_vista_reportes(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Reportes", "📊",
+                        "Análisis y reportes del negocio.\nGenera reportes de ventas, inventario y estadísticas.")
+            
+            elif vista_nombre == "gastos":
+                if crear_vista_gastos:
+                    crear_vista_gastos(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Gastos", "💰",
+                        "Control de gastos operativos.\nRegistra y categoriza los gastos del negocio.")
+            
+            elif vista_nombre == "usuarios":
+                if crear_vista_usuarios:
+                    crear_vista_usuarios(vista_content, ventana_principal)
+                else:
+                    crear_vista_generica(vista_content, "Usuarios", "🧑‍💻",
+                        "Gestión de usuarios del sistema.\nAdministra permisos y accesos de los usuarios.")
+            
+            elif vista_nombre == "config":
+                crear_vista_generica(vista_content, "Configuración", "⚙️",
+                    "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
+                
+            elif vista_nombre == "Información":
+                crear_vista_generica(vista_content, "Información", "❓",
+                    "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
+        
+        except Exception as e:
+            # Si hay error al cargar la vista, mostrar mensaje
+            tk.Label(
+                vista_content,
+                text=f"⚠️ Error al cargar el módulo",
+                font=("Segoe UI", 14, "bold"),
+                bg="#ffffff",
+                fg="#ef4444"
+            ).pack(pady=20)
+            
+            tk.Label(
+                vista_content,
+                text=str(e),
+                font=("Segoe UI", 10),
+                bg="#ffffff",
+                fg="#6b7280"
+            ).pack(pady=10)
 
         actualizar_botones_activos()
-
 
     # ================= CREACIÓN DE BOTONES ==================
     botones_menu = {}
 
     for modulo in modulos:
-
         btn_frame = tk.Frame(menu_buttons_frame, bg="#ffffff")
         btn_frame.pack(fill="x", padx=15, pady=5)
 
@@ -288,7 +370,6 @@ def abrir_sistema_principal(datos_usuario):
         btn.bind("<Enter>", on_enter)
         btn.bind("<Leave>", on_leave)
 
-
     # ================= BOTÓN ACTIVO ==================
     def actualizar_botones_activos():
         for vista_key, boton in botones_menu.items():
@@ -306,18 +387,6 @@ def abrir_sistema_principal(datos_usuario):
                     font=("Segoe UI", 11)
                 )
 
-
-    # ================= CARGAR VISTA INICIAL ==================
-    mostrar_vista("inicio")
-
-    
-    # Modificar mostrar_vista para actualizar botones
-    original_mostrar_vista = mostrar_vista
-    def mostrar_vista_con_actualizacion(vista_nombre):
-        original_mostrar_vista(vista_nombre)
-        actualizar_botones_activos()
-    mostrar_vista = mostrar_vista_con_actualizacion
-    
     # ================= FOOTER ==================
     footer = tk.Frame(ventana_principal, bg="#1f2937", height=40)
     footer.pack(fill="x", side="bottom")
@@ -355,11 +424,11 @@ def abrir_sistema_principal(datos_usuario):
     
     # Mostrar vista inicial
     mostrar_vista("inicio")
-    actualizar_botones_activos()
 
 # ================= FUNCIONES PARA CREAR VISTAS ==================
 
-def crear_vista_inicio(parent, datos_usuario):
+def crear_vista_inicio_local(parent, datos_usuario):
+    """Vista de inicio con estadísticas"""
     # Banner de bienvenida
     banner = tk.Frame(parent, bg="#dbeafe", bd=0)
     banner.pack(fill="x", pady=(0, 20))
@@ -384,15 +453,26 @@ def crear_vista_inicio(parent, datos_usuario):
     stats_frame = tk.Frame(parent, bg="#ffffff")
     stats_frame.pack(fill="both", expand=True, pady=10)
     
-    stats = [
-        {"titulo": "Ventas del Día", "valor": "$1,250,000", "icono": "💰", "color": "#10b981"},
-        {"titulo": "Productos", "valor": "248", "icono": "📦", "color": "#3b82f6"},
-        {"titulo": "Clientes", "valor": "86", "icono": "👥", "color": "#f59e0b"},
-        {"titulo": "Pendientes", "valor": "12", "icono": "⏰", "color": "#ef4444"}
-    ]
+    # Obtener datos reales de la base de datos
+    try:
+        # Aquí puedes conectar con tu base de datos para obtener estadísticas reales
+        stats = [
+            {"titulo": "Ventas del Día", "valor": "$1,250,000", "icono": "💰", "color": "#10b981"},
+            {"titulo": "Productos", "valor": "248", "icono": "📦", "color": "#3b82f6"},
+            {"titulo": "Clientes", "valor": "86", "icono": "👥", "color": "#f59e0b"},
+            {"titulo": "Pendientes", "valor": "12", "icono": "⏰", "color": "#ef4444"}
+        ]
+    except:
+        stats = [
+            {"titulo": "Ventas del Día", "valor": "$0", "icono": "💰", "color": "#10b981"},
+            {"titulo": "Productos", "valor": "0", "icono": "📦", "color": "#3b82f6"},
+            {"titulo": "Clientes", "valor": "0", "icono": "👥", "color": "#f59e0b"},
+            {"titulo": "Pendientes", "valor": "0", "icono": "⏰", "color": "#ef4444"}
+        ]
     
     for i, stat in enumerate(stats):
-        card = tk.Frame(stats_frame, bg="#f9fafb", bd=0, relief="solid", highlightbackground="#e5e7eb", highlightthickness=1)
+        card = tk.Frame(stats_frame, bg="#f9fafb", bd=0, relief="solid", 
+                       highlightbackground="#e5e7eb", highlightthickness=1)
         card.grid(row=0, column=i, padx=10, pady=10, sticky="nsew")
         stats_frame.columnconfigure(i, weight=1)
         
@@ -431,43 +511,8 @@ def crear_vista_inicio(parent, datos_usuario):
         fg="#6b7280"
     ).pack(pady=15)
 
-def crear_vista_ventas(parent):
-    crear_vista_generica(parent, "Ventas", "💵", 
-        "Módulo de registro y gestión de ventas.\nAquí puedes crear nuevas ventas, consultar historial y generar facturas.")
-
-def crear_vista_inventario(parent):
-    crear_vista_generica(parent, "Inventario", "📦",
-        "Control de stock y productos.\nRegistra entradas, salidas y mantén actualizado tu inventario.")
-
-def crear_vista_clientes(parent):
-    crear_vista_generica(parent, "Clientes", "👥",
-        "Gestión de base de datos de clientes.\nRegistra, consulta y administra información de tus clientes.")
-
-def crear_vista_proveedores(parent):
-    crear_vista_generica(parent, "Proveedores", "📑",
-        "Administración de proveedores.\nMantén el registro de tus proveedores y sus datos de contacto.")
-
-def crear_vista_compras(parent):
-    crear_vista_generica(parent, "Compras", "🧾",
-        "Registro de compras a proveedores.\nLleva el control de tus adquisiciones y pagos.")
-
-def crear_vista_reportes(parent):
-    crear_vista_generica(parent, "Reportes", "📊",
-        "Análisis y reportes del negocio.\nGenera reportes de ventas, inventario y estadísticas.")
-
-def crear_vista_gastos(parent):
-    crear_vista_generica(parent, "Gastos", "💰",
-        "Control de gastos operativos.\nRegistra y categoriza los gastos del negocio.")
-
-def crear_vista_usuarios(parent):
-    crear_vista_generica(parent, "Usuarios", "🧑‍💻",
-        "Gestión de usuarios del sistema.\nAdministra permisos y accesos de los usuarios.")
-
-def crear_vista_configuracion(parent):
-    crear_vista_generica(parent, "Configuración", "⚙️",
-        "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
-
 def crear_vista_generica(parent, titulo, icono, descripcion):
+    """Vista genérica para módulos no implementados"""
     container = tk.Frame(parent, bg="#ffffff")
     container.pack(fill="both", expand=True, pady=20)
     
@@ -489,20 +534,14 @@ def crear_vista_generica(parent, titulo, icono, descripcion):
         justify="center"
     ).pack(pady=20)
     
-    # Botón de ejemplo
-    btn = tk.Button(
+    # Mensaje de desarrollo
+    tk.Label(
         container,
-        text=f"Abrir {titulo}",
-        font=("Segoe UI", 11, "bold"),
-        bg="#3b82f6",
-        fg="white",
-        relief="flat",
-        padx=30,
-        pady=12,
-        cursor="hand2",
-        activebackground="#2563eb"
-    )
-    btn.pack(pady=20)
+        text="🚧 Módulo en desarrollo",
+        font=("Segoe UI", 11, "italic"),
+        bg="#ffffff",
+        fg="#9ca3af"
+    ).pack(pady=10)
 
 # ================= PRUEBA DEL SISTEMA ==================
 if __name__ == "__main__":
