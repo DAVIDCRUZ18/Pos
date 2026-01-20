@@ -4,6 +4,7 @@ from datetime import datetime
 import app.db.database as db
 from app.config.settings import APP_NAME, version
 from app.ui.ventas_view import crear_vista_ventas
+from app.ui.inventario_view import crear_vista_inventario
 
 # ================= IMPORTAR MÓDULOS DE VISTAS ==================
 try:

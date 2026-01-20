@@ -55,18 +55,57 @@ class VentasLogic:
         try:
             conn = db.conectar()
             cursor = conn.cursor()
+            
+            # CAMBIO: detalle_ventas → detalle_venta
             cursor.execute("""
-                SELECT dv.*, p.nombre as producto_nombre
+                SELECT dv.id, dv.venta_id, dv.cantidad, dv.precio_unitario,
+                    dv.subtotal, p.nombre as producto_nombre, p.codigo_barras
                 FROM detalle_venta dv
                 JOIN productos p ON dv.producto_id = p.id
                 WHERE dv.venta_id = ?
             """, (venta_id,))
+            
             detalle = cursor.fetchall()
             conn.close()
+            
+            print(f"✅ Detalle venta {venta_id}: {len(detalle)} productos encontrados")  # DEBUG
+            
             return detalle
+            
         except Exception as e:
-            print(f"Error al obtener detalle: {e}")
+            print(f"❌ Error al obtener detalle: {e}")
+            import traceback
+            traceback.print_exc()
             return []
+
+    @staticmethod
+    def obtener_venta_por_id(venta_id):
+        """Obtiene una venta específica por ID"""
+        try:
+            conn = db.conectar()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT v.id, v.fecha, v.total, v.cliente_id, v.metodo_pago,
+                    COALESCE(c.nombre, 'Consumidor Final') as cliente_nombre,
+                    c.documento
+                FROM ventas v
+                LEFT JOIN clientes c ON v.cliente_id = c.id
+                WHERE v.id = ?
+            """, (venta_id,))
+            
+            venta = cursor.fetchone()
+            conn.close()
+            
+            print(f"✅ Venta {venta_id} encontrada: {venta}")  # DEBUG
+            
+            return venta
+            
+        except Exception as e:
+            print(f"❌ Error al obtener venta: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
     
     @staticmethod
     def crear_venta(cliente_id, productos, usuario_id, metodo_pago="efectivo"):
