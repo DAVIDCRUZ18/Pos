@@ -16,12 +16,6 @@ try:
     from app.ui.gastos import crear_vista_gastos
 except ImportError:
     crear_vista_gastos = None
-
-try:
-    from app.ui.inventario import crear_vista_inventario
-except ImportError:
-    crear_vista_inventario = None
-
 try:
     from app.ui.proveedores import crear_vista_proveedores
 except ImportError:

@@ -1,274 +1,152 @@
 import sqlite3
-import hashlib
+import bcrypt
 from datetime import datetime
+from contextlib import contextmanager
 
-def conectar():
-    """Establece conexión con la base de datos"""
-    return sqlite3.connect("pos.db")
+DATABASE_NAME = "pos.db"
+
+@contextmanager
+def get_db():
+    """Context manager para asegurar que la conexión siempre se cierre"""
+    conn = sqlite3.connect(DATABASE_NAME)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def crear_tablas():
-    """Crea todas las tablas necesarias para el sistema"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    # Tabla de usuarios
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            nombre_completo TEXT,
-            rol TEXT DEFAULT 'vendedor',
-            activo INTEGER DEFAULT 1,
-            fecha_creacion TEXT,
-            ultimo_acceso TEXT ,
-            codigo_creacion TEXT UNIQUE
-        )
-    """)
-    
-    # Tabla de ventas
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ventas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha TEXT NOT NULL,
-            total REAL NOT NULL,
-            cliente_id INTEGER,
-            usuario_id INTEGER NOT NULL,
-            metodo_pago TEXT DEFAULT 'efectivo',
-            estado TEXT DEFAULT 'completada',
+    """Crea todas las tablas con integridad referencial"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # Habilitar claves foráneas
+        cursor.execute("PRAGMA foreign_keys = ON")
+        
+        # Tabla de usuarios
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT UNIQUE NOT NULL,
+                password BLOB NOT NULL,
+                nombre_completo TEXT,
+                rol TEXT CHECK(rol IN ('admin', 'vendedor')) DEFAULT 'vendedor',
+                activo INTEGER DEFAULT 1,
+                fecha_creacion TEXT,
+                ultimo_acceso TEXT,
+                codigo_creacion TEXT UNIQUE
+            )
+        """)
+        
+        # Tabla de clientes
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS clientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                documento TEXT UNIQUE,
+                telefono TEXT,
+                email TEXT,
+                direccion TEXT,
+                fecha_registro TEXT
+            )
+        """)
+        
+        # Tabla de productos
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS productos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                precio REAL NOT NULL CHECK(precio >= 0),
+                stock INTEGER DEFAULT 0 CHECK(stock >= 0),
+                codigo_barras TEXT UNIQUE,
+                categoria TEXT,
+                costo REAL DEFAULT 0,
+                min_stock INTEGER DEFAULT 5,
+                proveedor TEXT DEFAULT 'N/A',
+                fecha_creacion TEXT
+            )
+        """)
+        
+        # Tabla de ventas
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ventas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT NOT NULL,
+                total REAL NOT NULL,
+                cliente_id INTEGER,
+                usuario_id INTEGER NOT NULL,
+                metodo_pago TEXT DEFAULT 'efectivo',
+                estado TEXT DEFAULT 'completada',
+                FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+            )
+        """)
 
-            fecha_anulacion TEXT,
-            motivo_anulacion TEXT,
-            usuario_anula INTEGER,
-
-            FOREIGN KEY (cliente_id) REFERENCES clientes(id),
-            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-        );
-    """)
-    
-    # Tabla de productos
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS productos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
-            precio REAL NOT NULL,
-            stock INTEGER DEFAULT 0,
-            codigo_barras TEXT UNIQUE,
-            categoria TEXT,
-            fecha_creacion TEXT
-        )
-    """)
-    
-    # Tabla de detalle de ventas
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS detalle_venta (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            venta_id INTEGER NOT NULL,
-            producto_id INTEGER NOT NULL,
-            cantidad INTEGER NOT NULL,
-            precio_unitario REAL NOT NULL,
-            subtotal REAL NOT NULL,
-
-            FOREIGN KEY (venta_id) REFERENCES ventas(id),
-            FOREIGN KEY (producto_id) REFERENCES productos(id)
-        );
-    """)
-    
-    conn.commit()
-    conn.close()
-    print("[OK] Tablas creadas exitosamente")
+        # Tabla de detalle de ventas
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS detalle_venta (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                venta_id INTEGER NOT NULL,
+                producto_id INTEGER NOT NULL,
+                cantidad INTEGER NOT NULL CHECK(cantidad > 0),
+                precio_unitario REAL NOT NULL,
+                subtotal REAL NOT NULL,
+                FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id)
+            )
+        """)
+        
+        conn.commit()
+    print("[OK] Estructura de base de datos optimizada")
 
 def encriptar_password(password):
-    """Encripta la contraseña usando SHA256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Encripta la contraseña usando bcrypt (mucho más seguro que SHA256)"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt)
+
+def verificar_password(password_plana, password_encriptada):
+    """Verifica si la contraseña coincide"""
+    if isinstance(password_encriptada, str):
+        # Manejar contraseñas antiguas si existen (opcional)
+        import hashlib
+        old_hash = hashlib.sha256(password_plana.encode()).hexdigest()
+        return old_hash == password_encriptada
+    return bcrypt.checkpw(password_plana.encode('utf-8'), password_encriptada)
 
 def crear_usuario_admin():
     """Crea el usuario administrador por defecto si no existe"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
+    with get_db() as conn:
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM usuarios WHERE usuario = ?", ("admin",))
         if cursor.fetchone() is None:
-            password_encriptada = encriptar_password("admin123")
-            fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+            pwd = encriptar_password("admin123")
+            fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute("""
                 INSERT INTO usuarios (usuario, password, nombre_completo, rol, fecha_creacion)
                 VALUES (?, ?, ?, ?, ?)
-            """, ("admin", password_encriptada, "Administrador", "admin", fecha_actual))
-            
+            """, ("admin", pwd, "Administrador", "admin", fecha))
             conn.commit()
-            print("[OK] Usuario administrador creado")
-            print("  Usuario: admin")
-            print("  Contrasena: admin123")
-        else:
-            print("[OK] Usuario administrador ya existe")
-    except Exception as e:
-        print(f"[ERROR] Error al crear usuario admin: {e}")
-    finally:
-        conn.close()
-
-def registrar_usuario(usuario, password, nombre_completo, rol="vendedor"):
-    """Registra un nuevo usuario en el sistema"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
-        password_encriptada = encriptar_password(password)
-        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        cursor.execute("""
-            INSERT INTO usuarios (usuario, password, nombre_completo, rol, fecha_creacion)
-            VALUES (?, ?, ?, ?, ?)
-        """, (usuario, password_encriptada, nombre_completo, rol, fecha_actual))
-        
-        conn.commit()
-        return True, "Usuario registrado exitosamente"
-    except sqlite3.IntegrityError:
-        return False, "El nombre de usuario ya existe"
-    except Exception as e:
-        return False, f"Error al registrar usuario: {str(e)}"
-    finally:
-        conn.close()
+            print("[OK] Admin creado (admin / admin123)")
 
 def validar_login(usuario, password):
     """Valida las credenciales del usuario"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
-        password_encriptada = encriptar_password(password)
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, usuario, password, nombre_completo, rol, activo FROM usuarios WHERE usuario = ?", (usuario,))
+        res = cursor.fetchone()
         
-        cursor.execute("""
-            SELECT id, usuario, nombre_completo, rol, activo
-            FROM usuarios
-            WHERE usuario = ? AND password = ?
-        """, (usuario, password_encriptada))
-        
-        resultado = cursor.fetchone()
-        
-        if resultado:
-            if resultado[4] == 1:  # Verificar si está activo
-                # Actualizar último acceso
-                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("""
-                    UPDATE usuarios SET ultimo_acceso = ? WHERE id = ?
-                """, (fecha_actual, resultado[0]))
+        if res and verificar_password(password, res['password']):
+            if res['activo'] == 1:
+                fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                cursor.execute("UPDATE usuarios SET ultimo_acceso = ? WHERE id = ?", (fecha, res['id']))
                 conn.commit()
-                
-                return True, {
-                    "id": resultado[0],
-                    "usuario": resultado[1],
-                    "nombre_completo": resultado[2],
-                    "rol": resultado[3]
-                }
-            else:
-                return False, "Usuario inactivo. Contacte al administrador"
-        else:
-            return False, "Usuario o contraseña incorrectos"
-    except Exception as e:
-        return False, f"Error en el login: {str(e)}"
-    finally:
-        conn.close()
+                return True, dict(res)
+            return False, "Usuario inactivo"
+        return False, "Credenciales incorrectas"
 
-def obtener_datos_usuario(usuario_id):
-    """Obtiene los datos completos de un usuario"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute("""
-            SELECT id, usuario, nombre_completo, rol, activo, fecha_creacion, ultimo_acceso , codigo_creacion
-            FROM usuarios WHERE id = ?
-        """, (usuario_id,))
-        
-        resultado = cursor.fetchone()
-        if resultado:
-            return {
-                "id": resultado[0],
-                "usuario": resultado[1],
-                "nombre_completo": resultado[2],
-                "rol": resultado[3],
-                "activo": resultado[4],
-                "fecha_creacion": resultado[5],
-                "ultimo_acceso": resultado[6],
-                "codigo_creacion" : resultado[8]
-            }
-        return None
-    finally:
-        conn.close()
-
-def listar_usuarios():
-    """Lista todos los usuarios del sistema"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute("""
-            SELECT id, usuario, nombre_completo, rol, activo, fecha_creacion, ultimo_acceso , codigo_creacion
-            FROM usuarios ORDER BY id
-        """)
-        
-        usuarios = []
-        for row in cursor.fetchall():
-            usuarios.append({
-                "id": row[0],
-                "usuario": row[1],
-                "nombre_completo": row[2],
-                "rol": row[3],
-                "activo": row[4],
-                "fecha_creacion": row[5],
-                "ultimo_acceso": row[6] ,
-                "codigo_creacion": row[7]
-            })
-        return usuarios
-    finally:
-        conn.close()
-
-def crear_datos_prueba():
-    """Crea datos de prueba para el sistema"""
-    conn = conectar()
-    cursor = conn.cursor()
-    
-    try:
-        # Verificar si ya hay productos
-        cursor.execute("SELECT COUNT(*) FROM productos")
-        if cursor.fetchone()[0] == 0:
-            productos_prueba = [
-                ("Coca Cola 600ml", 2500, 50, "7501234567890", "Bebidas"),
-                ("Pan Integral", 3500, 30, "7501234567891", "Panadería"),
-                ("Leche Entera 1L", 4200, 40, "7501234567892", "Lácteos"),
-                ("Arroz 500g", 2800, 60, "7501234567893", "Granos"),
-                ("Aceite Vegetal 1L", 8500, 25, "7501234567894", "Aceites")
-            ]
-            
-            fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            for producto in productos_prueba:
-                cursor.execute("""
-                    INSERT INTO productos (nombre, precio, stock, codigo_barras, categoria, fecha_creacion)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (*producto, fecha_actual))
-            
-            conn.commit()
-            print("[OK] Datos de prueba creados exitosamente")
-        else:
-            print("[OK] Ya existen productos en la base de datos")
-    except Exception as e:
-        print(f"[ERROR] Error al crear datos de prueba: {e}")
-    finally:
-        conn.close()
-
-# Inicializar base de datos
 def inicializar_bd():
-    """Inicializa la base de datos con todas las configuraciones necesarias"""
-    print("=== Inicializando Base de Datos ===")
     crear_tablas()
     crear_usuario_admin()
-    crear_datos_prueba()
-    print("=== Base de datos lista ===\n")
 
 if __name__ == "__main__":
-    # Ejecutar cuando se corra directamente este archivo
     inicializar_bd()
