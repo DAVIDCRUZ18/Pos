@@ -6,30 +6,46 @@ from app.config.settings import APP_NAME, version
 from app.ui.ventas_view import crear_vista_ventas
 from app.ui.inventario_view import crear_vista_inventario
 
-# ================= IMPORTAR MÓDULOS DE VISTAS ==================
+# ================= IMPORTAR NUEVAS VISTAS ==================
 try:
-    from app.ui.clientes import crear_vista_clientes
+    from app.ui.clientes_view import crear_vista_clientes
 except ImportError:
     crear_vista_clientes = None
 
 try:
-    from app.ui.gastos import crear_vista_gastos
+    from app.ui.categorias_view import crear_vista_categorias
+except ImportError:
+    crear_vista_categorias = None
+
+try:
+    from app.ui.gastos_view import crear_vista_gastos
 except ImportError:
     crear_vista_gastos = None
+
 try:
-    from app.ui.proveedores import crear_vista_proveedores
+    from app.ui.proveedores_view import crear_vista_proveedores
 except ImportError:
     crear_vista_proveedores = None
 
 try:
-    from app.ui.reportes import crear_vista_reportes
+    from app.ui.compras_view import crear_vista_compras
+except ImportError:
+    crear_vista_compras = None
+
+try:
+    from app.ui.reportes_view import crear_vista_reportes
 except ImportError:
     crear_vista_reportes = None
 
 try:
-    from app.ui.usuarios import crear_vista_usuarios
+    from app.ui.usuarios_view import crear_vista_usuarios
 except ImportError:
     crear_vista_usuarios = None
+
+try:
+    from app.ui.configuracion_view import crear_vista_configuracion
+except ImportError:
+    crear_vista_configuracion = None
 
 
 def abrir_sistema_principal(datos_usuario):
@@ -78,7 +94,7 @@ def abrir_sistema_principal(datos_usuario):
     
     tk.Label(
         user_info_frame,
-        text=f"👤 {datos_usuario['usuario']}",
+        text=f"👤 {datos_usuario['nombre_completo']}",
         font=("Segoe UI", 11),
         bg="#1e3a8a",
         fg="#93c5fd"
@@ -126,7 +142,7 @@ def abrir_sistema_principal(datos_usuario):
     sidebar_container = tk.Frame(main_container, bg="#ffffff", width=280)
     sidebar_container.pack(side="left", fill="y", padx=(15, 5), pady=15)
     sidebar_container.pack_propagate(False)
-
+ 
     # Canvas scrollable
     sidebar_canvas = tk.Canvas(
         sidebar_container,
@@ -134,7 +150,7 @@ def abrir_sistema_principal(datos_usuario):
         highlightthickness=0
     )
     sidebar_canvas.pack(side="left", fill="both", expand=True)
-
+ 
     # Scrollbar
     sidebar_scrollbar = tk.Scrollbar(
         sidebar_container,
@@ -142,44 +158,44 @@ def abrir_sistema_principal(datos_usuario):
         command=sidebar_canvas.yview
     )
     sidebar_scrollbar.pack(side="right", fill="y")
-
+ 
     sidebar_canvas.configure(yscrollcommand=sidebar_scrollbar.set)
-
+ 
     # Frame interior del menú
     sidebar = tk.Frame(sidebar_canvas, bg="#ffffff")
-
+ 
     canvas_window = sidebar_canvas.create_window(
         (0, 0),
         window=sidebar,
         anchor="nw"
     )
-
+ 
     # ========= Ajustar scroll al tamaño del contenido =========
     def actualizar_scroll(event=None):
         sidebar_canvas.configure(scrollregion=sidebar_canvas.bbox("all"))
-
+ 
     sidebar.bind("<Configure>", actualizar_scroll)
-
+ 
     # ========= Forzar mismo ancho del canvas =========
     def fijar_ancho_canvas(event):
         sidebar_canvas.itemconfig(
             canvas_window,
             width=sidebar_container.winfo_width()
         )
-
+ 
     sidebar_canvas.bind("<Configure>", fijar_ancho_canvas)
-
+ 
     # ========= ACTIVAR SCROLL CON LA RUEDA DEL MOUSE =========
     def scroll_con_rueda(event):
         sidebar_canvas.yview_scroll(-1 * int(event.delta / 120), "units")
-
+ 
     # Windows / Linux
     sidebar_canvas.bind_all("<MouseWheel>", scroll_con_rueda)
-
+ 
     # MacOS
     sidebar_canvas.bind_all("<Button-4>", lambda e: sidebar_canvas.yview_scroll(-1, "units"))
     sidebar_canvas.bind_all("<Button-5>", lambda e: sidebar_canvas.yview_scroll(1, "units"))
-
+ 
     # ================= TÍTULO ==================
     tk.Label(
         sidebar,
@@ -189,47 +205,47 @@ def abrir_sistema_principal(datos_usuario):
         fg="#1f2937",
         pady=15
     ).pack(fill="x")
-
+ 
     tk.Frame(sidebar, bg="#e5e7eb", height=1).pack(fill="x", padx=10)
-
+ 
     # ================= FRAME DE BOTONES ==================
     menu_buttons_frame = tk.Frame(sidebar, bg="#ffffff")
     menu_buttons_frame.pack(fill="both", expand=True, pady=10)
-
-    # ================= MÓDULOS ==================
+ 
+    # ================= MÓDULOS ACTUALIZADOS ==================
     modulos = [
         {"nombre": "Inicio", "icono": "🏠", "vista": "inicio", "color": "#3b82f6"},
         {"nombre": "Ventas", "icono": "💵", "vista": "ventas", "color": "#10b981"},
         {"nombre": "Inventario", "icono": "📦", "vista": "inventario", "color": "#8b5cf6"},
-        {"nombre": "Clientes", "icono": "👥", "vista": "clientes", "color": "#f59e0b"},
-        {"nombre": "Proveedores", "icono": "📑", "vista": "proveedores", "color": "#06b6d4"},
-        {"nombre": "Compras", "icono": "🧾", "vista": "compras", "color": "#ec4899"},
-        {"nombre": "Reportes", "icono": "📊", "vista": "reportes", "color": "#14b8a6"},
+        {"nombre": "Categorías", "icono": "🏷️", "vista": "categorias", "color": "#f59e0b"},
+        {"nombre": "Clientes", "icono": "👥", "vista": "clientes", "color": "#ec4899"},
+        {"nombre": "Proveedores", "icono": "🏢", "vista": "proveedores", "color": "#06b6d4"},
+        {"nombre": "Compras", "icono": "🛒", "vista": "compras", "color": "#84cc16"},
         {"nombre": "Gastos", "icono": "💰", "vista": "gastos", "color": "#ef4444"},
-        {"nombre": "Usuarios", "icono": "🧑‍💻", "vista": "usuarios", "color": "#6366f1"},
-        {"nombre": "Configuración", "icono": "⚙️", "vista": "config", "color": "#64748b"},
-        {"nombre": "Información", "icono": "❓", "vista": "Información", "color": "#1f2d42"},
+        {"nombre": "Reportes", "icono": "📊", "vista": "reportes", "color": "#14b8a6"},
+        {"nombre": "Usuarios", "icono": "👤", "vista": "usuarios", "color": "#6366f1"},
+        {"nombre": "Configuración", "icono": "⚙️", "vista": "configuracion", "color": "#64748b"},
     ]
-
+ 
     # ================= CONTENIDO PRINCIPAL ==================
     content_frame = tk.Frame(main_container, bg="#ffffff", bd=0)
     content_frame.pack(side="left", fill="both", expand=True, padx=(5, 15), pady=15)
-
+ 
     # ================= FUNCIÓN CAMBIO DE VISTA ==================
     def mostrar_vista(vista_nombre):
         # Limpiar contenido
         for widget in content_frame.winfo_children():
             widget.destroy()
-
+ 
         vista_actual.set(vista_nombre)
-
+ 
         # Header
         vista_header = tk.Frame(content_frame, bg="#f8fafc", height=80)
         vista_header.pack(fill="x", padx=20, pady=(20, 10))
         vista_header.pack_propagate(False)
-
+ 
         modulo_info = next((m for m in modulos if m["vista"] == vista_nombre), None)
-
+        
         if modulo_info:
             tk.Label(
                 vista_header,
@@ -237,76 +253,85 @@ def abrir_sistema_principal(datos_usuario):
                 font=("Segoe UI", 22, "bold"),
                 bg="#f8fafc",
                 fg="#1f2937"
-            ).pack(side="left", pady=20, padx=10)
-
+            ).pack(side="left", pady=20, padx=10) if modulo_info else None
+ 
         vista_content = tk.Frame(content_frame, bg="#ffffff")
         vista_content.pack(fill="both", expand=True, padx=20, pady=10)
-
-        # ================= LLAMADO DE VISTAS ==================
+ 
+        # ================= LLAMADO DE VISTAS ACTUALIZADAS ==================
         try:
             if vista_nombre == "inicio":
                 crear_vista_inicio_local(vista_content, datos_usuario)
-            
+             
             elif vista_nombre == "ventas":
                 if crear_vista_ventas:
                     crear_vista_ventas(vista_content, ventana_principal)
                 else:
                     crear_vista_generica(vista_content, "Ventas", "💵", 
                         "Módulo de registro y gestión de ventas.\nAquí puedes crear nuevas ventas, consultar historial y generar facturas.")
-            
+             
             elif vista_nombre == "inventario":
                 if crear_vista_inventario:
                     crear_vista_inventario(vista_content, ventana_principal)
                 else:
                     crear_vista_generica(vista_content, "Inventario", "📦",
                         "Control de stock y productos.\nRegistra entradas, salidas y mantén actualizado tu inventario.")
-            
+             
+            elif vista_nombre == "categorias":
+                if crear_vista_categorias:
+                    crear_vista_categorias(vista_content, datos_usuario)
+                else:
+                    crear_vista_generica(vista_content, "Categorías", "🏷️",
+                        "Gestión de categorías de productos.\nOrganiza tus productos por categorías para mejor control.")
+             
             elif vista_nombre == "clientes":
                 if crear_vista_clientes:
-                    crear_vista_clientes(vista_content, ventana_principal)
+                    crear_vista_clientes(vista_content, datos_usuario)
                 else:
                     crear_vista_generica(vista_content, "Clientes", "👥",
                         "Gestión de base de datos de clientes.\nRegistra, consulta y administra información de tus clientes.")
-            
+             
             elif vista_nombre == "proveedores":
                 if crear_vista_proveedores:
-                    crear_vista_proveedores(vista_content, ventana_principal)
+                    crear_vista_proveedores(vista_content, datos_usuario)
                 else:
-                    crear_vista_generica(vista_content, "Proveedores", "📑",
+                    crear_vista_generica(vista_content, "Proveedores", "🏢",
                         "Administración de proveedores.\nMantén el registro de tus proveedores y sus datos de contacto.")
-            
+             
             elif vista_nombre == "compras":
-                crear_vista_generica(vista_content, "Compras", "🧾",
-                    "Registro de compras a proveedores.\nLleva el control de tus adquisiciones y pagos.")
-            
-            elif vista_nombre == "reportes":
-                if crear_vista_reportes:
-                    crear_vista_reportes(vista_content, ventana_principal)
+                if crear_vista_compras:
+                    crear_vista_compras(vista_content, datos_usuario)
                 else:
-                    crear_vista_generica(vista_content, "Reportes", "📊",
-                        "Análisis y reportes del negocio.\nGenera reportes de ventas, inventario y estadísticas.")
-            
+                    crear_vista_generica(vista_content, "Compras", "🛒",
+                        "Registro de compras a proveedores.\nLleva el control de tus adquisiciones y pagos.")
+             
             elif vista_nombre == "gastos":
                 if crear_vista_gastos:
-                    crear_vista_gastos(vista_content, ventana_principal)
+                    crear_vista_gastos(vista_content, datos_usuario)
                 else:
                     crear_vista_generica(vista_content, "Gastos", "💰",
                         "Control de gastos operativos.\nRegistra y categoriza los gastos del negocio.")
-            
+             
+            elif vista_nombre == "reportes":
+                if crear_vista_reportes:
+                    crear_vista_reportes(vista_content, datos_usuario)
+                else:
+                    crear_vista_generica(vista_content, "Reportes", "📊",
+                        "Análisis y reportes del negocio.\nGenera reportes de ventas, inventario y estadísticas.")
+             
             elif vista_nombre == "usuarios":
                 if crear_vista_usuarios:
-                    crear_vista_usuarios(vista_content, ventana_principal)
+                    crear_vista_usuarios(vista_content, datos_usuario)
                 else:
-                    crear_vista_generica(vista_content, "Usuarios", "🧑‍💻",
+                    crear_vista_generica(vista_content, "Usuarios", "👤",
                         "Gestión de usuarios del sistema.\nAdministra permisos y accesos de los usuarios.")
-            
-            elif vista_nombre == "config":
-                crear_vista_generica(vista_content, "Configuración", "⚙️",
-                    "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
-                
-            elif vista_nombre == "Información":
-                crear_vista_generica(vista_content, "Información", "❓",
-                    "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
+             
+            elif vista_nombre == "configuracion":
+                if crear_vista_configuracion:
+                    crear_vista_configuracion(vista_content, datos_usuario)
+                else:
+                    crear_vista_generica(vista_content, "Configuración", "⚙️",
+                        "Configuración del sistema.\nPersonaliza parámetros y ajustes generales del sistema.")
         
         except Exception as e:
             # Si hay error al cargar la vista, mostrar mensaje
@@ -317,7 +342,7 @@ def abrir_sistema_principal(datos_usuario):
                 bg="#ffffff",
                 fg="#ef4444"
             ).pack(pady=20)
-            
+             
             tk.Label(
                 vista_content,
                 text=str(e),
@@ -325,16 +350,16 @@ def abrir_sistema_principal(datos_usuario):
                 bg="#ffffff",
                 fg="#6b7280"
             ).pack(pady=10)
-
+ 
         actualizar_botones_activos()
-
+ 
     # ================= CREACIÓN DE BOTONES ==================
     botones_menu = {}
-
+ 
     for modulo in modulos:
         btn_frame = tk.Frame(menu_buttons_frame, bg="#ffffff")
         btn_frame.pack(fill="x", padx=15, pady=5)
-
+ 
         btn = tk.Button(
             btn_frame,
             text=f"{modulo['icono']}  {modulo['nombre']}",
@@ -350,21 +375,21 @@ def abrir_sistema_principal(datos_usuario):
             command=lambda v=modulo['vista']: mostrar_vista(v)
         )
         btn.pack(fill="x")
-
+ 
         botones_menu[modulo['vista']] = btn
-
+ 
         # Hover
         def on_enter(e, button=btn, vista=modulo["vista"]):
             if vista_actual.get() != vista:
                 button.config(bg="#e5e7eb")
-
+ 
         def on_leave(e, button=btn, vista=modulo["vista"]):
             if vista_actual.get() != vista:
                 button.config(bg="#f3f4f6")
-
+ 
         btn.bind("<Enter>", on_enter)
         btn.bind("<Leave>", on_leave)
-
+ 
     # ================= BOTÓN ACTIVO ==================
     def actualizar_botones_activos():
         for vista_key, boton in botones_menu.items():
@@ -381,7 +406,7 @@ def abrir_sistema_principal(datos_usuario):
                     fg="#374151",
                     font=("Segoe UI", 11)
                 )
-
+ 
     # ================= FOOTER ==================
     footer = tk.Frame(ventana_principal, bg="#1f2937", height=40)
     footer.pack(fill="x", side="bottom")
@@ -419,18 +444,18 @@ def abrir_sistema_principal(datos_usuario):
     
     # Mostrar vista inicial
     mostrar_vista("inicio")
-
+ 
 # ================= FUNCIONES PARA CREAR VISTAS ==================
-
+ 
 def crear_vista_inicio_local(parent, datos_usuario):
-    """Vista de inicio con estadísticas"""
+    """Vista de inicio con estadísticas reales"""
     # Banner de bienvenida
     banner = tk.Frame(parent, bg="#dbeafe", bd=0)
     banner.pack(fill="x", pady=(0, 20))
     
     tk.Label(
         banner,
-        text=f"¡Bienvenido/a, {datos_usuario['usuario']}!",
+        text=f"¡Bienvenido/a, {datos_usuario['nombre_completo']}!",
         font=("Segoe UI", 18, "bold"),
         bg="#dbeafe",
         fg="#1e40af"
@@ -450,19 +475,41 @@ def crear_vista_inicio_local(parent, datos_usuario):
     
     # Obtener datos reales de la base de datos
     try:
-        # Aquí puedes conectar con tu base de datos para obtener estadísticas reales
+        with db.get_db() as conn:
+            cursor = conn.cursor()
+            
+            # Estadísticas reales
+            cursor.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM clientes")
+            total_clientes = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM productos")
+            total_productos = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM ventas WHERE DATE(fecha) = DATE('now')")
+            ventas_hoy = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COALESCE(SUM(total), 0) FROM ventas WHERE DATE(fecha) = DATE('now') AND estado = 'completada'")
+            total_ventas_hoy = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM productos WHERE stock <= min_stock")
+            productos_bajo_stock = cursor.fetchone()[0]
+            
+            stats = [
+                {"titulo": "Ventas del Día", "valor": f"${total_ventas_hoy:,.0f}", "icono": "💵", "color": "#10b981"},
+                {"titulo": "Productos", "valor": str(total_productos), "icono": "📦", "color": "#8b5cf6"},
+                {"titulo": "Clientes", "valor": str(total_clientes), "icono": "👥", "color": "#ec4899"},
+                {"titulo": "Stock Bajo", "valor": str(productos_bajo_stock), "icono": "⚠️", "color": "#f59e0b"}
+            ]
+    except Exception as e:
+        print(f"Error obteniendo estadísticas: {e}")
         stats = [
-            {"titulo": "Ventas del Día", "valor": "$1,250,000", "icono": "💰", "color": "#10b981"},
-            {"titulo": "Productos", "valor": "248", "icono": "📦", "color": "#3b82f6"},
-            {"titulo": "Clientes", "valor": "86", "icono": "👥", "color": "#f59e0b"},
-            {"titulo": "Pendientes", "valor": "12", "icono": "⏰", "color": "#ef4444"}
-        ]
-    except:
-        stats = [
-            {"titulo": "Ventas del Día", "valor": "$0", "icono": "💰", "color": "#10b981"},
-            {"titulo": "Productos", "valor": "0", "icono": "📦", "color": "#3b82f6"},
-            {"titulo": "Clientes", "valor": "0", "icono": "👥", "color": "#f59e0b"},
-            {"titulo": "Pendientes", "valor": "0", "icono": "⏰", "color": "#ef4444"}
+            {"titulo": "Ventas del Día", "valor": "$0", "icono": "💵", "color": "#10b981"},
+            {"titulo": "Productos", "valor": "0", "icono": "📦", "color": "#8b5cf6"},
+            {"titulo": "Clientes", "valor": "0", "icono": "👥", "color": "#ec4899"},
+            {"titulo": "Stock Bajo", "valor": "0", "icono": "⚠️", "color": "#f59e0b"}
         ]
     
     for i, stat in enumerate(stats):
@@ -537,7 +584,7 @@ def crear_vista_generica(parent, titulo, icono, descripcion):
         bg="#ffffff",
         fg="#9ca3af"
     ).pack(pady=10)
-
+ 
 # ================= PRUEBA DEL SISTEMA ==================
 if __name__ == "__main__":
     root = tk.Tk()
@@ -545,7 +592,9 @@ if __name__ == "__main__":
     
     # Datos de prueba
     datos_prueba = {
-        "usuario": "David Cruz",
+        "id": 1,
+        "usuario": "admin",
+        "nombre_completo": "Administrador del Sistema",
         "rol": "administrador"
     }
     

@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from app.logic.ventas_logic import VentasLogic
-import app.db.database as db
+from app.db.database import get_db
 from app.services.pdf_service import generar_pdf
 import os
 
@@ -173,7 +173,7 @@ class VentasView(ttk.Frame):
             self.tabla_prod.delete(item)
             
         try:
-            conn = db.conectar()
+            conn = get_db()
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT id, nombre, precio, stock FROM productos WHERE stock > 0 ORDER BY nombre"
@@ -278,7 +278,7 @@ class VentasView(ttk.Frame):
             self.tabla_cart.delete(item)
         
         try:
-            conn = db.conectar()
+            conn = get_db()
             cursor = conn.cursor()
             
             for p in self.productos_carrito:
