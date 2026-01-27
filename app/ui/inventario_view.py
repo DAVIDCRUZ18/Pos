@@ -16,11 +16,6 @@ class InventarioView:
         main_frame = ttk.Frame(self.parent)
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Título
-        title_label = ttk.Label(main_frame, text="Gestión de Inventario", 
-                                font=("Arial", 16, "bold"))
-        title_label.pack(pady=(0, 20))
-        
         # Frame de formulario
         form_frame = ttk.LabelFrame(main_frame, text="Nuevo/Editar Producto", padding=10)
         form_frame.pack(fill="x", pady=(0, 10))

@@ -11,16 +11,110 @@ class VentasView(ttk.Frame):
         super().__init__(parent)
         self.usuario_id = usuario_id
         self.productos_carrito = []
+        self.configurar_estilos()
         self.crear_widgets()
         self.cargar_productos()
     
+    def configurar_estilos(self):
+        """Configura los estilos personalizados para la interfaz"""
+        style = ttk.Style()
+        
+        # Configurar tema base
+        style.theme_use('clam')
+        
+        # Colores principales
+        COLOR_PRIMARY = "#2C3E50"      # Azul oscuro
+        COLOR_SECONDARY = "#3498DB"    # Azul claro
+        COLOR_SUCCESS = "#27AE60"      # Verde
+        COLOR_DANGER = "#E74C3C"       # Rojo
+        COLOR_WARNING = "#F39C12"      # Naranja
+        COLOR_BG = "#ECF0F1"           # Gris claro
+        COLOR_WHITE = "#FFFFFF"
+        COLOR_TEXT = "#2C3E50"
+        
+        # Frame principal
+        style.configure("Custom.TFrame", background=COLOR_BG)
+        
+        # LabelFrames
+        style.configure("Custom.TLabelframe", 
+                       background=COLOR_WHITE,
+                       borderwidth=2,
+                       relief="flat")
+        style.configure("Custom.TLabelframe.Label",
+                       background=COLOR_WHITE,
+                       foreground=COLOR_PRIMARY,
+                       font=("Segoe UI", 11, "bold"))
+        
+        # Botones principales
+        style.configure("Primary.TButton",
+                       background=COLOR_SECONDARY,
+                       foreground=COLOR_WHITE,
+                       font=("Segoe UI", 10, "bold"),
+                       borderwidth=0,
+                       focuscolor="none",
+                       padding=(10, 8))
+        style.map("Primary.TButton",
+                 background=[("active", "#2980B9")])
+        
+        # Botón de éxito (registrar venta)
+        style.configure("Success.TButton",
+                       background=COLOR_SUCCESS,
+                       foreground=COLOR_WHITE,
+                       font=("Segoe UI", 12, "bold"),
+                       borderwidth=0,
+                       focuscolor="none",
+                       padding=(15, 12))
+        style.map("Success.TButton",
+                 background=[("active", "#229954")])
+        
+        # Botón de peligro
+        style.configure("Danger.TButton",
+                       background=COLOR_DANGER,
+                       foreground=COLOR_WHITE,
+                       font=("Segoe UI", 10),
+                       borderwidth=0,
+                       focuscolor="none",
+                       padding=(10, 8))
+        style.map("Danger.TButton",
+                 background=[("active", "#C0392B")])
+        
+        # Botón de advertencia
+        style.configure("Warning.TButton",
+                       background=COLOR_WARNING,
+                       foreground=COLOR_WHITE,
+                       font=("Segoe UI", 10),
+                       borderwidth=0,
+                       focuscolor="none",
+                       padding=(10, 8))
+        style.map("Warning.TButton",
+                 background=[("active", "#D68910")])
+        
+        # Treeview
+        style.configure("Custom.Treeview",
+                       background=COLOR_WHITE,
+                       foreground=COLOR_TEXT,
+                       fieldbackground=COLOR_WHITE,
+                       borderwidth=0,
+                       font=("Segoe UI", 9))
+        style.configure("Custom.Treeview.Heading",
+                       background=COLOR_PRIMARY,
+                       foreground=COLOR_WHITE,
+                       font=("Segoe UI", 10, "bold"),
+                       borderwidth=0)
+        style.map("Custom.Treeview.Heading",
+                 background=[("active", COLOR_SECONDARY)])
+        style.map("Custom.Treeview",
+                 background=[("selected", COLOR_SECONDARY)],
+                 foreground=[("selected", COLOR_WHITE)])
+    
     def crear_widgets(self):
         # Configurar grid para mejor distribución
+        self.configure(style="Custom.TFrame")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
         # Frame contenedor principal
-        frame_principal = ttk.Frame(self, padding=10)
+        frame_principal = ttk.Frame(self, style="Custom.TFrame", padding=15)
         frame_principal.grid(row=0, column=0, sticky="nsew")
         frame_principal.grid_rowconfigure(0, weight=1)
         frame_principal.grid_columnconfigure(0, weight=1)
@@ -29,15 +123,16 @@ class VentasView(ttk.Frame):
         # --- PRODUCTOS DISPONIBLES (Izquierda) ---
         frame_izq = ttk.LabelFrame(
             frame_principal, 
-            text="Productos Disponibles",
-            padding=10
+            text="📦 Productos Disponibles",
+            padding=15,
+            style="Custom.TLabelframe"
         )
-        frame_izq.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        frame_izq.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         frame_izq.grid_rowconfigure(0, weight=1)
         frame_izq.grid_columnconfigure(0, weight=1)
         
         # Tabla de productos
-        frame_tabla_prod = ttk.Frame(frame_izq)
+        frame_tabla_prod = ttk.Frame(frame_izq, style="Custom.TFrame")
         frame_tabla_prod.grid(row=0, column=0, sticky="nsew", pady=(0, 10))
         frame_tabla_prod.grid_rowconfigure(0, weight=1)
         frame_tabla_prod.grid_columnconfigure(0, weight=1)
@@ -46,16 +141,17 @@ class VentasView(ttk.Frame):
             frame_tabla_prod,
             columns=("id", "nombre", "precio", "stock"),
             show="headings",
-            height=20
+            height=20,
+            style="Custom.Treeview"
         )
         
         self.tabla_prod.heading("id", text="ID")
-        self.tabla_prod.heading("nombre", text="Nombre")
+        self.tabla_prod.heading("nombre", text="Nombre del Producto")
         self.tabla_prod.heading("precio", text="Precio")
         self.tabla_prod.heading("stock", text="Stock")
         
         self.tabla_prod.column("id", width=50, anchor=tk.CENTER)
-        self.tabla_prod.column("nombre", width=200)
+        self.tabla_prod.column("nombre", width=250)
         self.tabla_prod.column("precio", width=100, anchor=tk.E)
         self.tabla_prod.column("stock", width=80, anchor=tk.CENTER)
         
@@ -74,22 +170,24 @@ class VentasView(ttk.Frame):
         btn_agregar = ttk.Button(
             frame_izq,
             text="➕ Agregar al Carrito",
-            command=self.agregar_producto
+            command=self.agregar_producto,
+            style="Primary.TButton"
         )
         btn_agregar.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         
         # --- CARRITO DE COMPRA (Derecha) ---
         frame_der = ttk.LabelFrame(
             frame_principal,
-            text="Carrito de Compra",
-            padding=10
+            text="🛒 Carrito de Compra",
+            padding=15,
+            style="Custom.TLabelframe"
         )
-        frame_der.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+        frame_der.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         frame_der.grid_rowconfigure(0, weight=1)
         frame_der.grid_columnconfigure(0, weight=1)
         
         # Tabla de carrito
-        frame_tabla_cart = ttk.Frame(frame_der)
+        frame_tabla_cart = ttk.Frame(frame_der, style="Custom.TFrame")
         frame_tabla_cart.grid(row=0, column=0, sticky="nsew", pady=(0, 10))
         frame_tabla_cart.grid_rowconfigure(0, weight=1)
         frame_tabla_cart.grid_columnconfigure(0, weight=1)
@@ -98,7 +196,8 @@ class VentasView(ttk.Frame):
             frame_tabla_cart,
             columns=("id", "nombre", "cantidad", "precio", "subtotal"),
             show="headings",
-            height=20
+            height=20,
+            style="Custom.Treeview"
         )
         
         self.tabla_cart.heading("id", text="ID")
@@ -108,10 +207,10 @@ class VentasView(ttk.Frame):
         self.tabla_cart.heading("subtotal", text="Subtotal")
         
         self.tabla_cart.column("id", width=40, anchor=tk.CENTER)
-        self.tabla_cart.column("nombre", width=150)
-        self.tabla_cart.column("cantidad", width=60, anchor=tk.CENTER)
-        self.tabla_cart.column("precio", width=80, anchor=tk.E)
-        self.tabla_cart.column("subtotal", width=90, anchor=tk.E)
+        self.tabla_cart.column("nombre", width=180)
+        self.tabla_cart.column("cantidad", width=70, anchor=tk.CENTER)
+        self.tabla_cart.column("precio", width=90, anchor=tk.E)
+        self.tabla_cart.column("subtotal", width=100, anchor=tk.E)
         
         # Scrollbar carrito
         scroll_cart = ttk.Scrollbar(
@@ -125,47 +224,52 @@ class VentasView(ttk.Frame):
         scroll_cart.grid(row=0, column=1, sticky="ns")
         
         # Botones de carrito
-        frame_botones_cart = ttk.Frame(frame_der)
-        frame_botones_cart.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        frame_botones_cart = ttk.Frame(frame_der, style="Custom.TFrame")
+        frame_botones_cart.grid(row=1, column=0, sticky="ew", pady=(0, 15))
         frame_botones_cart.grid_columnconfigure(0, weight=1)
         frame_botones_cart.grid_columnconfigure(1, weight=1)
         
         btn_quitar = ttk.Button(
             frame_botones_cart,
             text="🗑️ Quitar",
-            command=self.quitar_producto
+            command=self.quitar_producto,
+            style="Danger.TButton"
         )
         btn_quitar.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         
         btn_limpiar = ttk.Button(
             frame_botones_cart,
             text="🧹 Limpiar Todo",
-            command=self.limpiar_carrito
+            command=self.limpiar_carrito,
+            style="Warning.TButton"
         )
-        btn_limpiar.grid(row=0, column=1, sticky="ew")
+        btn_limpiar.grid(row=0, column=1, sticky="ew", padx=(5, 0))
         
         # Frame para total
-        frame_total = ttk.Frame(frame_der)
-        frame_total.grid(row=2, column=0, sticky="ew", pady=(10, 10))
+        frame_total = ttk.Frame(frame_der, style="Custom.TFrame")
+        frame_total.grid(row=2, column=0, sticky="ew", pady=(10, 15))
         
-        # Separador visual
-        ttk.Separator(frame_total, orient="horizontal").pack(fill="x", pady=(0, 10))
+        # Fondo para el total
+        canvas_total = tk.Canvas(frame_total, height=80, bg="#27AE60", highlightthickness=0)
+        canvas_total.pack(fill="x")
         
-        self.lbl_total = ttk.Label(
-            frame_total,
+        self.lbl_total = tk.Label(
+            canvas_total,
             text="TOTAL: $0.00",
-            font=("Segoe UI", 18, "bold"),
-            foreground="#2E7D32"
+            font=("Segoe UI", 20, "bold"),
+            foreground="#FFFFFF",
+            background="#27AE60"
         )
-        self.lbl_total.pack()
+        self.lbl_total.place(relx=0.5, rely=0.5, anchor="center")
         
         # Botón registrar venta
         btn_registrar = ttk.Button(
             frame_der,
             text="✅ REGISTRAR VENTA",
-            command=self.registrar_venta
+            command=self.registrar_venta,
+            style="Success.TButton"
         )
-        btn_registrar.grid(row=3, column=0, sticky="ew", ipady=10)
+        btn_registrar.grid(row=3, column=0, sticky="ew")
     
     def cargar_productos(self):
         """Carga los productos desde la base de datos"""
@@ -173,23 +277,23 @@ class VentasView(ttk.Frame):
             self.tabla_prod.delete(item)
             
         try:
-            conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT id, nombre, precio, stock FROM productos WHERE stock > 0 ORDER BY nombre"
-            )
-            productos = cursor.fetchall()
-            conn.close()
+            # CORRECCIÓN: Usar context manager correctamente
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT id, nombre, precio, stock FROM productos WHERE stock > 0 ORDER BY nombre"
+                )
+                productos = cursor.fetchall()
             
             for row in productos:
-                # Formatear precio para mostrar
                 producto_id, nombre, precio, stock = row
                 self.tabla_prod.insert("", tk.END, values=(
                     producto_id,
                     nombre,
                     f"${precio:.2f}",
                     stock
-                ))
+                ), tags=('oddrow' if self.tabla_prod.get_children().index(self.tabla_prod.get_children()[-1]) % 2 else 'evenrow',) if self.tabla_prod.get_children() else ('evenrow',))
+                
         except Exception as e:
             messagebox.showerror("Error", f"Error al cargar productos: {e}")
     
@@ -206,14 +310,12 @@ class VentasView(ttk.Frame):
         precio_str = prod[2]
         stock = int(prod[3])
         
-        # Limpiar el precio (quitar $ y convertir)
         precio = float(precio_str.replace("$", "").replace(",", ""))
 
         if stock <= 0:
             messagebox.showwarning("Stock", "Producto sin stock disponible")
             return
 
-        # Validar stock en carrito
         cantidad_en_carrito = sum(
             p["cantidad"] for p in self.productos_carrito if p["producto_id"] == producto_id
         )
@@ -225,7 +327,6 @@ class VentasView(ttk.Frame):
             )
             return
 
-        # Buscar si ya existe en el carrito
         encontrado = False
         for p in self.productos_carrito:
             if p["producto_id"] == producto_id:
@@ -278,27 +379,27 @@ class VentasView(ttk.Frame):
             self.tabla_cart.delete(item)
         
         try:
-            conn = get_db()
-            cursor = conn.cursor()
-            
-            for p in self.productos_carrito:
-                cursor.execute(
-                    "SELECT nombre FROM productos WHERE id = ?", 
-                    (p["producto_id"],)
-                )
-                resultado = cursor.fetchone()
+            # CORRECCIÓN: Usar context manager correctamente
+            with get_db() as conn:
+                cursor = conn.cursor()
                 
-                if resultado:
-                    nombre = resultado[0]
-                    self.tabla_cart.insert("", tk.END, values=(
-                        p["producto_id"],
-                        nombre,
-                        p["cantidad"],
-                        f"${p['precio']:.2f}",
-                        f"${p['subtotal']:.2f}"
-                    ))
+                for p in self.productos_carrito:
+                    cursor.execute(
+                        "SELECT nombre FROM productos WHERE id = ?", 
+                        (p["producto_id"],)
+                    )
+                    resultado = cursor.fetchone()
+                    
+                    if resultado:
+                        nombre = resultado[0]
+                        self.tabla_cart.insert("", tk.END, values=(
+                            p["producto_id"],
+                            nombre,
+                            p["cantidad"],
+                            f"${p['precio']:.2f}",
+                            f"${p['subtotal']:.2f}"
+                        ))
             
-            conn.close()
         except Exception as e:
             messagebox.showerror("Error", f"Error al actualizar carrito: {e}")
         
@@ -332,7 +433,6 @@ class VentasView(ttk.Frame):
 
             venta_id = resultado["venta_id"]
 
-            # Elegir comprobante
             opcion = messagebox.askquestion(
                 "Comprobante",
                 "¿Deseas generar FACTURA?\n\n(Sí = Factura / No = Ticket)"
@@ -343,9 +443,8 @@ class VentasView(ttk.Frame):
             else:
                 self.generar_ticket(venta_id)
 
-            messagebox.showinfo("Éxito", "Venta registrada correctamente")
+            messagebox.showinfo("Éxito", "✅ Venta registrada correctamente")
             
-            # Limpiar carrito y recargar
             self.productos_carrito = []
             self.actualizar_carrito()
             self.cargar_productos()
@@ -353,63 +452,8 @@ class VentasView(ttk.Frame):
         except Exception as e:
             messagebox.showerror("Error", f"Error al registrar venta: {e}")
             
-    def mostrar_comprobante(self, texto, titulo):
-        """Muestra el comprobante en una ventana nueva"""
-        win = tk.Toplevel(self)
-        win.title(titulo)
-        win.geometry("600x700")
-        win.resizable(False, False)
-        
-        # Centrar ventana
-        win.transient(self.winfo_toplevel())
-        win.grab_set()
-        
-        # Calcular posición centrada
-        win.update_idletasks()
-        x = (win.winfo_screenwidth() // 2) - (600 // 2)
-        y = (win.winfo_screenheight() // 2) - (700 // 2)
-        win.geometry(f"600x700+{x}+{y}")
-
-        # Frame principal
-        frame = ttk.Frame(win, padding=15)
-        frame.pack(fill=tk.BOTH, expand=True)
-
-        # Texto del comprobante con scroll
-        frame_texto = ttk.Frame(frame)
-        frame_texto.pack(fill=tk.BOTH, expand=True)
-        
-        txt = tk.Text(
-            frame_texto, 
-            wrap=tk.WORD, 
-            font=("Courier New", 10),
-            padx=15,
-            pady=15,
-            bg="#f5f5f5"
-        )
-        
-        scrollbar = ttk.Scrollbar(frame_texto, command=txt.yview)
-        txt.configure(yscrollcommand=scrollbar.set)
-        
-        txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        txt.insert("1.0", texto)
-        txt.config(state="disabled")
-
-        # Botones
-        frame_btn = ttk.Frame(frame)
-        frame_btn.pack(fill=tk.X, pady=(15, 0))
-        
-        ttk.Button(
-            frame_btn, 
-            text="Cerrar", 
-            command=win.destroy
-        ).pack(side=tk.RIGHT, padx=5)
-        
     def generar_factura(self, venta_id):
         try:
-            print(f"🎫 Generando factura para venta_id: {venta_id}")  # DEBUG
-            
             venta = VentasLogic.obtener_venta_por_id(venta_id)
             detalle = VentasLogic.obtener_detalle_venta(venta_id)
 
@@ -421,7 +465,6 @@ class VentasView(ttk.Frame):
                 messagebox.showwarning("Advertencia", "La venta no tiene productos asociados")
                 return
 
-            # Ajuste de índices según la consulta SQL
             fecha = venta[1]
             total = venta[2]
             metodo_pago = venta[4] if len(venta) > 4 else "efectivo"
@@ -441,8 +484,7 @@ class VentasView(ttk.Frame):
     """
 
             for d in detalle:
-                # d = [id, venta_id, cantidad, precio_unitario, subtotal, nombre, codigo]
-                producto = d[5][:35]  # nombre
+                producto = d[5][:35]
                 cantidad = d[2]
                 precio = d[3]
                 subtotal = d[4]
@@ -457,25 +499,18 @@ class VentasView(ttk.Frame):
     Gracias por su compra
     """
 
-            # Crear directorio si no existe
             os.makedirs("Facturas", exist_ok=True)
-            
             ruta = os.path.join("Facturas", f"factura_{venta_id:05d}.pdf")
             generar_pdf(texto, ruta, "Factura de Venta")
-
-            messagebox.showinfo("Factura generada", f"Factura guardada en:\n{ruta}")
+            messagebox.showinfo("Factura generada", f"✅ Factura guardada en:\n{ruta}")
 
         except Exception as e:
             messagebox.showerror("Error", f"Error al generar factura: {e}")
-            print(f"❌ Error completo:")
             import traceback
             traceback.print_exc()
 
-
     def generar_ticket(self, venta_id):
         try:
-            print(f"🎫 Generando ticket para venta_id: {venta_id}")  # DEBUG
-            
             venta = VentasLogic.obtener_venta_por_id(venta_id)
             detalle = VentasLogic.obtener_detalle_venta(venta_id)
             
@@ -501,8 +536,7 @@ class VentasView(ttk.Frame):
     """
             
             for d in detalle:
-                # d = [id, venta_id, cantidad, precio_unitario, subtotal, nombre, codigo]
-                producto = d[5][:25]  # nombre
+                producto = d[5][:25]
                 cantidad = d[2]
                 subtotal = d[4]
                 texto += f"{producto:<25} x{cantidad:>2}  ${subtotal:>8.2f}\n"
@@ -513,26 +547,22 @@ class VentasView(ttk.Frame):
     Gracias por su compra
     """
             
-            # Crear directorio si no existe
             os.makedirs("Ticket", exist_ok=True)
-            
             ruta = os.path.join("Ticket", f"ticket_{venta_id:05d}.pdf")
             generar_pdf(texto, ruta, "Ticket de Venta")
-            messagebox.showinfo("Ticket generado", f"Ticket guardado en:\n{ruta}")
+            messagebox.showinfo("Ticket generado", f"✅ Ticket guardado en:\n{ruta}")
             
         except Exception as e:
             messagebox.showerror("Error", f"Error al generar ticket: {e}")
-            print(f"❌ Error completo:")
             import traceback
             traceback.print_exc()
 
-# LA FUNCIÓN DEBE ESTAR FUERA DE LA CLASE, AL NIVEL RAÍZ
+
 def crear_vista_ventas(parent, ventana_principal):
     """Función para crear la vista de ventas dentro del frame parent"""
     for widget in parent.winfo_children():
         widget.destroy()
     
     usuario_id = 1
-    
     vista = VentasView(parent=parent, usuario_id=usuario_id)
     vista.pack(fill=tk.BOTH, expand=True)
